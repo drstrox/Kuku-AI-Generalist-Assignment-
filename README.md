@@ -1,199 +1,181 @@
+# 🎬 Kuku Promo Finder
+
+**ML-assisted promo-moment mining for microdrama screenplays.**
+Upload a script. Get ranked 20–60s cut-ins with second-exact timecodes, a hook,
+a cliffhanger, and a one-line rationale — every pick strict-validated before you see it.
+
+[![Python](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue.svg)](https://www.python.org)
+[![Streamlit](https://img.shields.io/badge/streamlit-1.32%2B-ff4b4b.svg)](https://streamlit.io)
+[![Tests](https://img.shields.io/badge/tests-38%20passing-2e9e6b.svg)](tests/)
+[![No paid APIs](https://img.shields.io/badge/paid%20APIs-none-6d3ac9.svg)](#configuration)
+
+</div>
+
+![pipeline](pipeline.svg)
+
 ---
-title: Kuku Promo Finder
-emoji: 🎬
-colorFrom: purple
-colorTo: yellow
-sdk: streamlit
-sdk_version: 1.67.0
-app_file: app.py
-pinned: false
----
 
-# 🎬 Kuku Promo Finder — Problem 1 (Find the Promos)
+## Why this exists
 
-Reads a microdrama screenplay and finds the best **20–60 second promo moments** for
-Instagram / TikTok / YouTube — ranked, timestamped, with a hook, a cliffhanger and a
-one-line *why it works*. Built for the **Kuku — AI Generalist Assignment, Problem 1**.
+Microdrama editors hand-pick promo clips — one episode at a time, by watching everything.
+The selection criteria are repeatable, timestamp-exact and high-volume: a long (and perfect)
+target for ML-assisted drafting with a human approving before anything ships.
 
-> The full user workflow: **Upload screenplay → choose audience & promotional preferences →
-> ML engine analyses → ranked promos with timestamps + explanations → feedback → regenerate.**
+**Kuku Promo Finder** is that first draft. It reads a screenplay (`.txt` / `.pdf` / `.docx`),
+scores every viable 18–65s beat-anchored window, and returns a diverse, non-overlapping,
+audience-tuned shortlist. It never edits video; the screenplay's own timestamps are the
+ground truth.
 
-![pipeline](docs/pipeline.svg)
+## Highlights
 
-## What it does
+- **Whole-series search** — candidates enumerated across *all* episodes at once; de-duplicated
+  (NMS), diversified (MMR, λ=0.72), ranked for the selected audience & platform.
+- **Strict validation, always on** — every surfaced promo (ranked or stitched) must pass:
+  duration **20–60 s inclusive** · finite, chronological, non-overlapping timestamps ·
+  **hook within the first 3.0 s** · **unresolved ending**. Invalid candidates are rejected,
+  logged and replaced — never silently kept.
+- **Interpretable ranking** — a fully visible linear blend of 10 features (hook archetypes,
+  ML emotion intensity/swing, premise alignment, pace, dialogue balance, episode prior).
+  Every score is inspectable per-feature; no black-box ordering.
+- **Taste learning** — 👍/👎 votes train a small logistic "taste model"
+  (α = min(0.5, n/16)) that re-ranks on the next run. Offline, free, downloadable.
+- **Optional LLM judgment** — swappable LLM scores each surfaced promo on hook strength,
+  cliffhanger quality, standalone comprehensibility and narrative coherence as
+  range-validated JSON. HF Inference or Gemini; heuristic fallback when unconfigured;
+  clean error when the API fails; the ML ranking never depends on it.
+- **No paid APIs** — local models (DistilRoBERTa emotion + MiniLM-L6 embeddings),
+  CPU-friendly, free-tier deployable.
 
-1. **Finds promo moments across the whole series** — every 18–65s window anchored to
-   beat boundaries is scored on 10 features; non-max suppression + MMR leave a diverse,
-   non-overlapping top-N, and a **strict validator** then rejects anything outside
-   20–60s (inclusive), with valid chronological non-overlapping timestamps, a hook inside
-   the first 3.0s and an unresolved ending. Invalid candidates are replaced by the
-   next-best valid ones — never silently kept. Each promo reports: episode, start/end
-   timestamps of **every segment** (in order), the hook line, the cliffhanger line, and
-   why it works.
-2. **Ranks them** for a target audience (Romance / Revenge & justice / Suspense /
-   Family-betrayal / General) and platform (TikTok-Reels vs YouTube), with fully visible,
-   interpretable weights.
-3. **Quality-checks itself** — `src/batch.py` reports cliffhanger agreement, promo–promo
-   overlap, baselines & ablations, and flags weak picks. See `outputs/eval_report.md`
-   (automated checks and builder-scored human review are kept in separate sections).
-4. **Learns your taste** — 👍/👎 per recommendation trains a logistic **taste model**
-   (α = min(0.5, n/16)) that re-ranks on the next run. Download/restore votes from the sidebar.
-5. **Optional LLM judgment** — a swappable LLM scores each surfaced promo on hook strength,
-   cliffhanger quality, standalone comprehensibility and narrative coherence (structured,
-   validated JSON). Works with Hugging Face Inference or Gemini; heuristic fallback when
-   unconfigured; clean error state if the API fails. The ML ranking never depends on it.
+## Quickstart
 
-## ML inside
-
-| Component | Model / method | Purpose |
-|---|---|---|
-| Emotion & intensity | `j-hartmann/emotion-english-distilroberta-base` | arousal-weighted intensity, emotional swing |
-| Semantics | `sentence-transformers/all-MiniLM-L6-v2` | hook-archetype match, premise alignment, MMR diversity |
-| Ranking | interpretable linear blend + NMS + MMR | transparent, interview-defensible ordering |
-| Taste learning | sklearn `LogisticRegression` (standardized) | learns the editor’s preferences from 👍/👎 |
-| Validation | deterministic rules (no ML) | 20–60s inclusive, timestamps, order, hook ≤ 3s, unresolved ending |
-| LLM (optional) | HF Inference *or* Gemini (env-var swap) | contextual promo evaluation; off unless keys are set |
-
-No paid APIs anywhere. Local models only; the LLM layer stays off unless keys are set.
-
-## Setup & run locally
-
-**Prerequisites:** Python 3.10–3.13, ~2 GB free disk (models), CPU is fine.
+**Prerequisites:** Python 3.10–3.13 · ~2 GB disk (models) · CPU is fine
 
 ```bash
 git clone <this-repo> && cd kuku-promo-finder
 python -m venv .venv && source .venv/bin/activate
+pip install torch --index-url https://download.pytorch.org/whl/cpu   # CPU wheels (~200 MB, not 2.5 GB)
 pip install -r requirements.txt
-# torch CPU wheels (default index is huge CUDA builds; this saves ~2 GB):
-#   pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip uninstall -y torch 2>/dev/null; pip install torch --index-url https://download.pytorch.org/whl/cpu
 streamlit run app.py
 ```
 
+Open http://localhost:8501 → **Upload** a screenplay → pick audience & platform →
+**Analyze** → ranked promo cards with copy-ready `HH:MM:SS.ss` timecodes.
+
 First run downloads ~500 MB of models (cached afterwards in `~/.cache/huggingface`).
-For a zero-ML tiny deploy: `KUKU_USE_ML=0 streamlit run app.py` (lexicon fallback, still works).
+Zero-ML smoke deploy (lexicon fallback, no downloads):
 
-If the browser upload fails with **AxiosError 403** inside a sandboxed preview/iframe,
-the XSRF handshake is blocked by the platform (not by your file). This repo ships
-`.streamlit/config.toml` with `enableXsrfProtection = false` and `enableCORS = false`;
-if you are on a strict iframe host you can also paste the screenplay text directly in the
-Upload tab ("Paste screenplay instead") — it uses the same parser.
+```bash
+KUKU_USE_ML=0 streamlit run app.py
+```
 
-## Environment variables
+> Upload blocked with **AxiosError 403** in a sandboxed iframe? That's the preview's XSRF
+> handshake, not your file — this repo ships `.streamlit/config.toml` relaxing XSRF/CORS,
+> and the Upload tab has a **paste-screenplay** path that bypasses the upload POST entirely.
 
-| Variable | Default | Meaning |
-|---|---|---|
-| `KUKU_USE_ML` | `1` | `0` → lexicon fallback, no model download |
-| `KUKU_EMOTION_MODEL` | `j-hartmann/emotion-english-distilroberta-base` | HF emotion classifier |
-| `KUKU_EMBEDDING_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | HF sentence encoder |
-| `KUKU_DEV_PACK` | unset | absolute path to a confidential episode folder; adds a dev-only "load pack" button (never set in deploys) |
-| `KUKU_LLM_PROVIDER` | `none` | `none` · `huggingface` · `gemini` |
-| `KUKU_LLM_MODEL` | provider default | HF default `meta-llama/Llama-3.1-8B-Instruct` · Gemini default `gemini-2.0-flash` |
-| `HF_TOKEN` | unset | required when `KUKU_LLM_PROVIDER=huggingface` (free HF Inference token) |
-| `GEMINI_API_KEY` | unset | required when `KUKU_LLM_PROVIDER=gemini` (free Google AI Studio key) |
-| `KUKU_LLM_TIMEOUT` | `45` | seconds before an LLM call is abandoned (clean error, app unaffected) |
-
-Models are swappable by changing env vars only — no code edits.
-
-## Running the pipeline (batch CLI, raw outputs)
+### Batch mode — reproduce the raw outputs
 
 ```bash
 python -m src.batch --input-dir "/path/to/50-episode-folder" \
-    --out outputs --top-k 25 --seed 13 \
-    [--audience "General audience (balanced)"] [--platform "Any platform"] \
-    [--manual-review outputs/manual_review.json]
+    --out outputs --top-k 25 --seed 13
 ```
 
-Produces `promos.json`, `promos.csv`, `eval_report.md`, `run_manifest.json`.
-`outputs/` is gitignored; the input pack must NEVER be committed.
+Produces `promos.json` · `promos.csv` · `eval_report.md` · `run_manifest.json`.
 
-## Output formats
+## Configuration
 
-**`promos.json`** — list of promos, one object each:
+All models are swappable via environment variables — no code edits.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `KUKU_USE_ML` | `1` | `0` → lexicon-only mode (no model downloads) |
+| `KUKU_EMOTION_MODEL` | `j-hartmann/emotion-english-distilroberta-base` | HF emotion classifier |
+| `KUKU_EMBEDDING_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | HF sentence encoder |
+| `KUKU_LLM_PROVIDER` | `none` | `none` · `huggingface` · `gemini` |
+| `KUKU_LLM_MODEL` | provider default | HF: `meta-llama/Llama-3.1-8B-Instruct` · Gemini: `gemini-2.0-flash` |
+| `HF_TOKEN` | — | free HF Inference token (huggingface provider) |
+| `GEMINI_API_KEY` | — | free Google AI Studio key (gemini provider) |
+| `KUKU_LLM_TIMEOUT` | `45` | LLM timeout (s) — on failure: clean error, app unaffected |
+| `KUKU_DEV_PACK` | unset | dev-only folder of episodes for the "load pack" button — never set in deploys |
+
+## Testing
+
+```bash
+pip install pytest
+python -m pytest tests/ -q     # 38 passed: parser · validation · LLM · end-to-end
+```
+
+Validation suite covers duration boundaries (19.99 / 20.0 / 60.0 / 60.01 s), hook-window
+shadows, multi-segment duration sums, timestamp finiteness, chronology, overlaps,
+unresolved-ending detection, LLM output parsing/failure paths, and an end-to-end run on the
+bundled original sample screenplay.
+
+## What the outputs look like
 
 ```json
 {
-  "rank": 1, "promo_id": "promo_ab12cd34ef", "episode": 26,
-  "segments": [{"episode": 26, "start": 132.4, "end": 187.1}],
-  "duration_s": 54.7, "hook_type": "accusation",
-  "hook_time_s": 132.4, "hook_text": "You are a terrible liar.",
-  "cliffhanger_time_s": 187.1, "cliffhanger_text": "…he freezes —",
-  "scores": {"hook": 0.83, "cliffhanger": 0.91, "total_score": 0.77, "...": "..."},
-  "why_it_works": "Accusation cold open…", "weights": {"hook": 0.30, "...": "..."}
+  "rank": 1, "episode": 27, "segments": [{"episode": 27, "start": 124.6, "end": 150.5}],
+  "duration_s": 25.9, "hook_type": "Betrayal reveal",
+  "hook_text": "She admits she has been giving the Duchess poison in secret!",
+  "cliffhanger_time_s": 150.5, "scores": {"hook": 0.95, "cliffhanger": 1.00, "total_score": 0.82},
+  "why_it_works": "…"
 }
 ```
 
-**`promos.csv`** — flat spreadsheet-friendly table (rank, episode, segments, duration_s,
-hook, cliffhanger, component scores, why_it_works).
+`eval_report.md` is split into **§A Automated** (strict-validation accounting with every
+rejected candidate and why · cliffhanger agreement · baselines & ablations · auto-flagged
+weak picks) and **§B Human** (builder-scored hook / cliffhanger / standalone ratings with
+failure examples — explicitly judgment, not user research). Numbers: 18/20 top-20 promos
+end within 2.5s of a scripted cliffhanger (21/25 overall) vs ~1/15 random; hook strength
+~0.76 vs 0.36 random. No CTR claims — see **Honest limits** below.
 
-**`eval_report.md`** — §A automated evaluation (strict-validation accounting incl. rejected
-candidates; cliffhanger agreement; overlap; baselines & ablation; auto-flagged weak picks)
-and §B human evaluation (builder-scored hook/cliffhanger/standalone ratings + failure
-examples; explicitly labelled as judgment, not user research).
+## Deployment
 
-**`run_manifest.json`** — run date, input dir, episode count/numbers, audience/platform,
-top-k, seed, verified model availability, package versions, Python/platform, git commit,
-weights, runtime, and the validation accounting (considered → rejected → surfaced).
-
-## Troubleshooting
-
-| Symptom | Fix |
+| Target | Notes |
 |---|---|
-| `AxiosError 403` on file upload | Sandboxed preview blocks the XSRF handshake — hard-refresh; or use the paste-text path; `.streamlit/config.toml` already relaxes XSRF/CORS |
-| `torch` install pulls ~2.5 GB CUDA wheels | install the CPU build: `pip install torch --index-url https://download.pytorch.org/whl/cpu` |
-| First analysis takes minutes | one-time model download; subsequent runs reuse `~/.cache/huggingface` |
-| `KUKU_USE_ML=0` gives weaker insights | expected — lexicon fallback has no emotion/semantic signal; use for deploy smoke-tests only |
-| LLM button shows warning/error | set `KUKU_LLM_PROVIDER` + the matching key, or leave unset for heuristic fallback; the ML ranking never needs the LLM |
-| Feedback "disappears" between sessions | free hosts have ephemeral disks; use the sidebar download/restore votes buttons |
-| `No .txt episodes found` in batch | `--input-dir` must point at the folder containing `Episode *.txt` |
+| **Hugging Face Spaces** (recommended) | New Space → SDK *Streamlit* → upload this repo as-is (Spaces front-matter already in this README). 16 GB RAM free tier; cold start ≈ 1–2 min (model download). |
+| **Streamlit Community Cloud** | Same file set; main file `app.py`. Ephemeral disk — use sidebar vote download/restore. |
+| **Colab** | `!pip install -r requirements.txt` then `!streamlit run app.py & npx localtunnel --port 8501` |
+| **Vercel** | Cannot run Streamlit — static hosting only; pair with Spaces/Cloud for the app. |
 
-## Deploy free
-
-**Hugging Face Spaces (recommended, free, 16 GB RAM)** — this README carries the Spaces
-front-matter. New Space → SDK *Streamlit* → upload repo *without* the input pack → it
-builds and runs. Cold start ≈ 1–2 min (model download); use persistent storage or accept
-re-downloads.
-
-**Streamlit Community Cloud (free, ~1 GB RAM)** — connect the GitHub repo → main file
-`app.py` → deploy. Torch CPU fits, but keep `requirements.txt` as-is (CPU wheels). The
-feedback file is ephemeral; use the sidebar download/restore.
-
-**Vercel** — Vercel does not run Streamlit servers. It *can* host the static solution doc /
-landing page; pair it with Spaces/Streamlit Cloud for the app itself.
-
-**Colab** — open a notebook, `!pip install -r requirements.txt`,
-`!streamlit run app.py & npx localtunnel --port 8501` (or `pyngrok`) to get a public URL;
-upload episodes in the UI.
-
-## Confidentiality & integrity
-
-The 50-episode input pack is Kuku confidential content shared for this assignment. **Do not
-commit it or publish raw outputs publicly** — submit them through the placement form as asked.
-This repo is `.gitignore`d for exactly that. `data/demo_episode.txt` is an original sample
-written for this project and is safe to publish. `outputs/manual_review.json` contains
-paraphrased reviewer notes only — no screenplay excerpts — so it is safe to keep in git.
-
-## Repo map
+## Project structure
 
 ```
-app.py                  Streamlit UI (6 tabs: upload → prefs → analyze → results → feedback → how it works)
+app.py                  Streamlit UI (upload → prefs → analyze → results → feedback → how it works)
 src/parser.py           screenplay → EPISODE/SCENE/BEAT structure (timestamp-exact)
 src/features.py         per-beat ML signals + beat-anchored candidate enumeration
 src/scorer.py           weights, audience/platform presets, NMS + MMR, explanations
-src/pipeline.py         end-to-end ranked promos (+ strict validation + stitched highlight reel)
-src/validation.py       strict validator: 20–60s inclusive, timestamps, order, hook ≤ 3s, unresolved ending
+src/pipeline.py         end-to-end ranked promos (+ strict validation, stitched reels)
+src/validation.py       strict validator (20–60s inclusive · timestamps · hook ≤ 3s · unresolved ending)
 src/feedback.py         👍/👎 → logistic taste model
-src/llm.py              optional swappable LLM contextual evaluator (HF / Gemini; validated JSON + fallback)
-src/batch.py            CLI batch run → promos.json / promos.csv / eval_report.md / run_manifest.json
-tests/                  parser · validation · LLM · end-to-end suites (pytest)
-outputs/                raw outputs from the full 50-episode input pack (gitignored)
-data/demo_episode.txt   original sample screenplay
-docs/                   solution doc + architecture diagram + walkthrough script
+src/llm.py              swappable LLM contextual evaluator (validated JSON + fallback)
+src/batch.py            batch CLI → promos.json / .csv / eval_report.md / run_manifest.json
+tests/                  parser · validation · LLM · end-to-end (pytest)
+outputs/                eval_report.md · run_manifest.json · manual_review.json
+data/demo_episode.txt   original sample screenplay (safe to publish)
+docs/                   solution doc (2-page PDF) · architecture diagram · walkthrough script
 ```
 
-## Known limits (honest version)
+## Honest limits
 
-See `docs/` — short list: it reads *scripts*, not video (no visual judgment); premise
-alignment tracks plot-keyword density; cliffhanger agreement saturates on microdramas
-(they literally mark cut-to-black); melodrama keywords can over-fire without human review;
-feedback persists only per host (ephemeral on free tiers).
+- It reads **scripts, not video** — no visual judgment, no cut/frame analysis.
+- Premise alignment is a cosine proxy, correlated with plot-keyword density — not a
+  comprehension test. Melodrama keywords over-fire without human review.
+- Cliffhanger agreement saturates on this corpus (episodes literally mark cut-to-black);
+  it validates endpoint placement, **not** CTR or watch time.
+- Feedback persists only on writable disk (ephemeral on most free hosts).
+- Builder-scored human review is one reviewer with the screenplay visible — n=1, ±1
+  tolerance; not user research. A blind multi-editor study is the obvious next step.
+
+## Confidentiality & academic integrity
+
+The 50-episode input pack this was developed against is client/confidential material and is
+**not** in this repository (`.gitignore`d; raw outputs submitted separately).
+`data/demo_episode.txt` is an original sample written for this project.
+Built with AI pair-programming; every modeling decision, weight and failure analysis was
+reviewed and is defensible.
+
+---
+
+<div align="center">
+<sub>Problem 1 · AI Generalist Assignment (IIT Indore on-campus placements) · 2026</sub>
+</div>

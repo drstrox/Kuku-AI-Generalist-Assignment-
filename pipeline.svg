@@ -1,0 +1,44 @@
+<svg viewBox="0 0 980 120" xmlns="http://www.w3.org/2000/svg" font-family="Georgia, serif">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#f2c069"/><stop offset="1" stop-color="#e2725b"/>
+    </linearGradient>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b8b9e"/>
+    </marker>
+  </defs>
+  <rect width="980" height="120" rx="14" fill="#12121b"/>
+  <g font-size="12.5" fill="#e9e7f2" text-anchor="middle">
+    <rect x="12" y="34" width="118" height="52" rx="10" fill="#1b1b26" stroke="#2c2c3a"/>
+    <text x="71" y="56">1 · Parse</text><text x="71" y="74" font-size="9.5" fill="#9b98ad">scenes · beats</text>
+    <line x1="132" y1="60" x2="160" y2="60" stroke="#8b8b9e" stroke-width="1.6" marker-end="url(#arr)"/>
+
+    <rect x="164" y="34" width="132" height="52" rx="10" fill="#1b1b26" stroke="#2c2c3a"/>
+    <text x="230" y="52">2 · ML signals</text>
+    <text x="230" y="68" font-size="9.5" fill="#9b98ad">DistilRoBERTa emotion</text>
+    <text x="230" y="82" font-size="9.5" fill="#9b98ad">MiniLM embeddings</text>
+    <line x1="298" y1="60" x2="326" y2="60" stroke="#8b8b9e" stroke-width="1.6" marker-end="url(#arr)"/>
+
+    <rect x="330" y="34" width="128" height="52" rx="10" fill="#1b1b26" stroke="#2c2c3a"/>
+    <text x="394" y="52">3 · Enumerate</text>
+    <text x="394" y="68" font-size="9.5" fill="#9b98ad">beat-anchored windows</text>
+    <text x="394" y="82" font-size="9.5" fill="#9b98ad">18–65 s</text>
+    <line x1="460" y1="60" x2="488" y2="60" stroke="#8b8b9e" stroke-width="1.6" marker-end="url(#arr)"/>
+
+    <rect x="492" y="34" width="122" height="52" rx="10" fill="#1b1b26" stroke="#2c2c3a"/>
+    <text x="553" y="52">4 · Score</text>
+    <text x="553" y="68" font-size="9.5" fill="#9b98ad">hook · cliffhanger</text>
+    <text x="553" y="82" font-size="9.5" fill="#9b98ad">intensity · premise</text>
+    <line x1="616" y1="60" x2="644" y2="60" stroke="#8b8b9e" stroke-width="1.6" marker-end="url(#arr)"/>
+
+    <rect x="648" y="34" width="122" height="52" rx="10" fill="#1b1b26" stroke="#2c2c3a"/>
+    <text x="709" y="52">5 · NMS + MMR</text>
+    <text x="709" y="68" font-size="9.5" fill="#9b98ad">dedupe + diversity</text>
+    <text x="709" y="82" font-size="9.5" fill="#9b98ad">top-N ranked</text>
+    <line x1="772" y1="60" x2="800" y2="60" stroke="#8b8b9e" stroke-width="1.6" marker-end="url(#arr)"/>
+
+    <rect x="804" y="34" width="162" height="52" rx="10" fill="url(#g)"/>
+    <text x="885" y="56" fill="#231303" font-weight="bold">6 · Ranked promos</text>
+    <text x="885" y="73" font-size="9.5" fill="#231303">timestamps + why · 👍/👎</text>
+  </g>
+</svg>
