@@ -1,0 +1,36 @@
+{
+  "archetypes": [
+    {"id": "public_humiliation", "label": "Public humiliation", "prompts": [
+      "a person is publicly shamed, humiliated or mocked in front of everyone",
+      "someone is insulted or disrespected before a crowd or family"
+    ]},
+    {"id": "betrayal_reveal", "label": "Betrayal reveal", "prompts": [
+      "a fiancé, spouse or lover is caught betraying someone with another person",
+      "a shocking betrayal or infidelity is suddenly revealed"
+    ]},
+    {"id": "slap_shock", "label": "Slap / physical shock", "prompts": [
+      "a slap across the face, a strike, a sudden act of violence or assault",
+      "a person hits or strikes another in a confrontation"
+    ]},
+    {"id": "secret_exposed", "label": "Secret exposed", "prompts": [
+      "a hidden secret, letter, evidence or truth is exposed and discovered",
+      "someone uncovers proof of a crime, a poisoning or a conspiracy"
+    ]},
+    {"id": "confession_love", "label": "Confession / forbidden love", "prompts": [
+      "a passionate confession of love or desire against family or society",
+      "two people share a charged moment of desire, a kiss or a vow"
+    ]},
+    {"id": "threat_danger", "label": "Threat / mortal danger", "prompts": [
+      "someone is threatened with death, poison, a weapon or imprisonment",
+      "a vulnerable person is in grave physical danger"
+    ]},
+    {"id": "power_reversal", "label": "Power reversal", "prompts": [
+      "the lowly underdog is suddenly revealed to hold power, status or identity",
+      "a beggar or nobody turns out to be a duke, duchess, heir or queen"
+    ]},
+    {"id": "shocking_line", "label": "Shocking line", "prompts": [
+      "a devastating verbal blow, a cruel verdict like you are worthless or get out",
+      "a single sentence lands like a bombshell"
+    ]}
+  ]
+}

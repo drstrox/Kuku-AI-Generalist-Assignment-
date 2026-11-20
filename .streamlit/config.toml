@@ -1,0 +1,7 @@
+# Sandboxed previews (e.g. iframe embeds with opaque origins) break Streamlit's
+# XSRF cookie check on file upload -> "AxiosError: Request failed with status code 403".
+# This app holds no user credentials and bundles no secrets, so relaxing the
+# same-origin guard for uploads is acceptable. Re-enable for public production if desired.
+[server]
+enableXsrfProtection = false
+enableCORS = false

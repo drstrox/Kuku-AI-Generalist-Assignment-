@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Confidential input pack — NEVER commit (Kuku assignment material)
+**/input_pack/
+I Married a Broken Soldier*/
+
+# Raw outputs contain verbatim screenplay quotes — keep out of public git.
+# (Submit them via the assignment form instead.)
+outputs/promos.json
+outputs/promos.csv
+
+# Local taste-learning votes
+data/feedback.jsonl
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
