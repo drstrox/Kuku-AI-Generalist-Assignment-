@@ -55,8 +55,11 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Open http://localhost:8501 → **Upload** a screenplay → pick audience & platform →
-**Analyze** → ranked promo cards with copy-ready `HH:MM:SS.ss` timecodes.
+- Open http://localhost:8501
+- **Upload** a screenplay or paste the text file 
+- Pick audience & platform
+- Click on RUN ML Analysis
+- Ranked promo cards with copy-ready `HH:MM:SS.ss` timecodes.
 
 ### Batch mode — reproduce the raw outputs
 
