@@ -18,13 +18,9 @@ a cliffhanger, and a one-line rationale — every pick strict-validated before y
 ## Why this exists
 
 Microdrama editors hand-pick promo clips — one episode at a time, by watching everything.
-The selection criteria are repeatable, timestamp-exact and high-volume: a long (and perfect)
-target for ML-assisted drafting with a human approving before anything ships.
+The selection criteria are repeatable, timestamp-exact and high-volume: a long target for ML-assisted drafting with a human approving before anything ships.
 
-**Kuku Promo Finder** is that first draft. It reads a screenplay (`.txt` / `.pdf` / `.docx`),
-scores every viable 18–65s beat-anchored window, and returns a diverse, non-overlapping,
-audience-tuned shortlist. It never edits video; the screenplay's own timestamps are the
-ground truth.
+**Kuku Promo Finder** reads a screenplay (`.txt` / `.pdf` / `.docx`), scores every viable 18–65s beat-anchored window, and returns a diverse, non-overlapping, audience-tuned shortlist. It never edits video; the screenplay's own timestamps are the ground truth.
 
 ## Highlights
 
@@ -51,26 +47,16 @@ ground truth.
 **Prerequisites:** Python 3.10–3.13 · ~2 GB disk (models) · CPU is fine
 
 ```bash
-git clone <this-repo> && cd kuku-promo-finder
+git clone https://github.com/drstrox/Kuku-AI-Generalist-Assignment-
+cd kuku-promo-finder
 python -m venv .venv && source .venv/bin/activate
-pip install torch --index-url https://download.pytorch.org/whl/cpu   # CPU wheels (~200 MB, not 2.5 GB)
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
 Open http://localhost:8501 → **Upload** a screenplay → pick audience & platform →
 **Analyze** → ranked promo cards with copy-ready `HH:MM:SS.ss` timecodes.
-
-First run downloads ~500 MB of models (cached afterwards in `~/.cache/huggingface`).
-Zero-ML smoke deploy (lexicon fallback, no downloads):
-
-```bash
-KUKU_USE_ML=0 streamlit run app.py
-```
-
-> Upload blocked with **AxiosError 403** in a sandboxed iframe? That's the preview's XSRF
-> handshake, not your file — this repo ships `.streamlit/config.toml` relaxing XSRF/CORS,
-> and the Upload tab has a **paste-screenplay** path that bypasses the upload POST entirely.
 
 ### Batch mode — reproduce the raw outputs
 
@@ -92,10 +78,7 @@ All models are swappable via environment variables — no code edits.
 | `KUKU_EMBEDDING_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | HF sentence encoder |
 | `KUKU_LLM_PROVIDER` | `none` | `none` · `huggingface` · `gemini` |
 | `KUKU_LLM_MODEL` | provider default | HF: `meta-llama/Llama-3.1-8B-Instruct` · Gemini: `gemini-2.0-flash` |
-| `HF_TOKEN` | — | free HF Inference token (huggingface provider) |
-| `GEMINI_API_KEY` | — | free Google AI Studio key (gemini provider) |
 | `KUKU_LLM_TIMEOUT` | `45` | LLM timeout (s) — on failure: clean error, app unaffected |
-| `KUKU_DEV_PACK` | unset | dev-only folder of episodes for the "load pack" button — never set in deploys |
 
 ## Testing
 
@@ -127,15 +110,6 @@ weak picks) and **§B Human** (builder-scored hook / cliffhanger / standalone ra
 failure examples — explicitly judgment, not user research). Numbers: 18/20 top-20 promos
 end within 2.5s of a scripted cliffhanger (21/25 overall) vs ~1/15 random; hook strength
 ~0.76 vs 0.36 random. No CTR claims — see **Honest limits** below.
-
-## Deployment
-
-| Target | Notes |
-|---|---|
-| **Hugging Face Spaces** (recommended) | New Space → SDK *Streamlit* → upload this repo as-is (Spaces front-matter already in this README). 16 GB RAM free tier; cold start ≈ 1–2 min (model download). |
-| **Streamlit Community Cloud** | Same file set; main file `app.py`. Ephemeral disk — use sidebar vote download/restore. |
-| **Colab** | `!pip install -r requirements.txt` then `!streamlit run app.py & npx localtunnel --port 8501` |
-| **Vercel** | Cannot run Streamlit — static hosting only; pair with Spaces/Cloud for the app. |
 
 ## Project structure
 
